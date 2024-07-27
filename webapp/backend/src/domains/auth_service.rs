@@ -182,46 +182,15 @@ impl<T: AuthRepository + std::fmt::Debug> AuthService<T> {
                 AppError::InternalServerError
             })?;
 
-        // match output.status.success() {
-        //     true => Ok(Bytes::from(output.stdout)),
-        //     false => {
-        //         error!(
-        //             "画像リサイズのコマンド実行に失敗しました: {:?}",
-        //             String::from_utf8_lossy(&output.stderr)
-        //         );
-        //         Err(AppError::InternalServerError)
-        //     }
-        // }
-
-        // コマンドが成功したかをチェック
-        if output.status.success() {
-            let resized_image_data = Bytes::from(output.stdout);
-
-            // リサイズした画像を保存するパス
-            //let output_path: PathBuf = Path::new(&format!("images/user_profile/{}", profile_image_name)).to_path_buf();
-
-            // 非同期でリサイズした画像をファイルに書き込み
-            let mut output_file = File::create(&path).map_err(|e| {
-                error!("リサイズ画像の保存に失敗しました: {:?}", e);
-                AppError::InternalServerError
-            })?;
-
-            // 画像データをファイルに書き込み
-            output_file.write_all(&resized_image_data).map_err(|e| {
-                error!("リサイズ画像の保存に失敗しました: {:?}", e);
-                AppError::InternalServerError
-            })?;
-
-            //info!("リサイズ画像が保存されました: {:?}", output_path);
-
-            Ok(resized_image_data)
-        } else {
-            // コマンド実行が失敗した場合のエラーハンドリング
-            error!(
-                "画像リサイズのコマンド実行に失敗しました: {:?}",
-                String::from_utf8_lossy(&output.stderr)
-            );
-            Err(AppError::InternalServerError)
+        match output.status.success() {
+            true => Ok(Bytes::from(output.stdout)),
+            false => {
+                error!(
+                    "画像リサイズのコマンド実行に失敗しました: {:?}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+                Err(AppError::InternalServerError)
+            }
         }
     }
 
