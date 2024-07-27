@@ -3,6 +3,7 @@ use crate::errors::AppError;
 use crate::models::order::{CompletedOrder, Order};
 use chrono::{DateTime, Utc};
 use sqlx::mysql::MySqlPool;
+use sqlx::Row;
 
 #[derive(Debug)]
 pub struct OrderRepositoryImpl {
@@ -15,7 +16,66 @@ impl OrderRepositoryImpl {
     }
 }
 
+
+// struct OrderWithUsername {
+//     id: i32,
+//     client_id: i32,
+//     dispatcher_id: Option<i32>,
+//     tow_truck_id: Option<i32>,
+//     status: String,
+//     node_id: i32,
+//     car_value: f64,
+//     order_time: DateTime<Utc>,
+//     completed_time: Option<DateTime<Utc>>,
+//     username: Option<String>,
+// }
+
+
 impl OrderRepository for OrderRepositoryImpl {
+    async fn repo_find_order_by_id(&self, order_id: i32)-> Result<(Order, Option<String>), AppError> {
+        let row = sqlx::query(
+            r#"
+                SELECT 
+                    o.id,
+                    o.client_id,
+                    o.dispatcher_id, 
+                    o.tow_truck_id, 
+                    o.status, 
+                    o.node_id, 
+                    o.car_value, 
+                    o.order_time, 
+                    o.completed_time,
+                    u.username
+                FROM 
+                    orders o
+                LEFT JOIN 
+                    users u
+                ON 
+                    o.client_id = u.id
+                WHERE 
+                    o.id = ?
+            "#
+        )
+        .bind(order_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        let order = Order {
+            id: row.try_get("id")?,
+            client_id: row.try_get("client_id")?,
+            dispatcher_id: row.try_get("dispatcher_id")?,
+            tow_truck_id: row.try_get("tow_truck_id")?,
+            status: row.try_get("status")?,
+            node_id: row.try_get("node_id")?,
+            car_value: row.try_get("car_value")?,
+            order_time: row.try_get("order_time")?,
+            completed_time: row.try_get("completed_time")?,
+        };
+        let username: Option<String> = row.try_get("username")?;
+        
+        Ok((order, username))
+    }
+
     async fn find_order_by_id(&self, id: i32) -> Result<Order, AppError> {
         let order = sqlx::query_as::<_, Order>(
             "SELECT 
