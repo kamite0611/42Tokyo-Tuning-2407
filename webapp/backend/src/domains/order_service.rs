@@ -86,17 +86,7 @@ impl<
     }
 
     pub async fn get_order_by_id(&self, id: i32) -> Result<OrderDto, AppError> {
-
-        // hello
-        let (new_order, new_username) = self.order_repository.repo_find_order_by_id(id).await?;
-        let order = self.order_repository.find_order_by_id(id).await?;
-
-        let new_client_username = self
-            .auth_repository
-            .find_username_by_id(order.client_id)
-            .await?
-            .unwrap();
-
+        let (order, new_client_username) = self.order_repository.repo_find_order_by_id(id).await?;
 
         let dispatcher = match order.dispatcher_id {
             Some(dispatcher_id) => self
@@ -151,7 +141,7 @@ impl<
         Ok(OrderDto {
             id: order.id,
             client_id: order.client_id,
-            client_username: Some(new_client_username),
+            client_username: Some(new_client_username.unwrap()),
             dispatcher_user_id,
             dispatcher_username,
             driver_user_id,
