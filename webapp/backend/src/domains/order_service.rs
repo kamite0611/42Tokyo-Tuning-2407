@@ -13,6 +13,7 @@ use crate::{
 
 pub trait OrderRepository {
     async fn find_order_by_id(&self, id: i32) -> Result<Order, AppError>;
+    async fn repo_find_order_by_id(&self, order_id: i32)-> Result<(Order, Option<String>), AppError>;
     async fn update_order_status(&self, order_id: i32, status: &str) -> Result<(), AppError>;
     async fn get_paginated_orders(
         &self,
@@ -85,6 +86,9 @@ impl<
     }
 
     pub async fn get_order_by_id(&self, id: i32) -> Result<OrderDto, AppError> {
+
+        // hello
+        let (new_order, new_username) = self.order_repository.repo_find_order_by_id(id).await?;
         let order = self.order_repository.find_order_by_id(id).await?;
 
         let new_client_username = self
