@@ -1,0 +1,5 @@
+docker exec -it mysql bash
+mysql -uroot -p
+> mysql
+use 42Tokyo-db;
+show tables;
