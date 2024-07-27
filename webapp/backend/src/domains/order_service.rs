@@ -87,13 +87,12 @@ impl<
     pub async fn get_order_by_id(&self, id: i32) -> Result<OrderDto, AppError> {
         let order = self.order_repository.find_order_by_id(id).await?;
 
-        let client_username = self
+        let new_client_username = self
             .auth_repository
-            .find_user_by_id(order.client_id)
-            .await
-            .unwrap()
-            .unwrap()
-            .username;
+            .find_username_by_id(order.client_id)
+            .await?
+            .unwrap();
+
 
         let dispatcher = match order.dispatcher_id {
             Some(dispatcher_id) => self
@@ -109,11 +108,9 @@ impl<
                 Some(dispatcher.user_id),
                 Some(
                     self.auth_repository
-                        .find_user_by_id(dispatcher.user_id)
-                        .await
-                        .unwrap()
-                        .unwrap()
-                        .username,
+                        .find_username_by_id(dispatcher.user_id)
+                        .await?
+                        .unwrap(),
                 ),
             ),
             None => (None, None),
@@ -133,11 +130,9 @@ impl<
                 Some(tow_truck.driver_id),
                 Some(
                     self.auth_repository
-                        .find_user_by_id(tow_truck.driver_id)
-                        .await
-                        .unwrap()
-                        .unwrap()
-                        .username,
+                        .find_username_by_id(tow_truck.driver_id)
+                        .await?
+                        .unwrap(),
                 ),
             ),
             None => (None, None),
@@ -152,7 +147,7 @@ impl<
         Ok(OrderDto {
             id: order.id,
             client_id: order.client_id,
-            client_username: Some(client_username),
+            client_username: Some(new_client_username),
             dispatcher_user_id,
             dispatcher_username,
             driver_user_id,
@@ -187,11 +182,9 @@ impl<
         for order in orders {
             let client_username = self
                 .auth_repository
-                .find_user_by_id(order.client_id)
-                .await
-                .unwrap()
-                .unwrap()
-                .username;
+                .find_username_by_id(order.client_id)
+                .await?
+                .unwrap();
 
             let dispatcher = match order.dispatcher_id {
                 Some(dispatcher_id) => self
@@ -207,11 +200,9 @@ impl<
                     Some(dispatcher.user_id),
                     Some(
                         self.auth_repository
-                            .find_user_by_id(dispatcher.user_id)
-                            .await
-                            .unwrap()
-                            .unwrap()
-                            .username,
+                            .find_username_by_id(dispatcher.user_id)
+                            .await?
+                            .unwrap(),
                     ),
                 ),
                 None => (None, None),
@@ -231,11 +222,9 @@ impl<
                     Some(tow_truck.driver_id),
                     Some(
                         self.auth_repository
-                            .find_user_by_id(tow_truck.driver_id)
-                            .await
-                            .unwrap()
-                            .unwrap()
-                            .username,
+                            .find_username_by_id(tow_truck.driver_id)
+                            .await?
+                            .unwrap(),
                     ),
                 ),
                 None => (None, None),

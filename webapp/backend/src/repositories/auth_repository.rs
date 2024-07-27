@@ -23,6 +23,15 @@ impl AuthRepository for AuthRepositoryImpl {
 
         Ok(user)
     }
+    
+    async fn find_username_by_id(&self, id: i32) -> Result<Option<String>, AppError> {
+        let username = sqlx::query_scalar::<_, String>("SELECT username FROM users WHERE id = ?")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(username)
+    }
 
     async fn find_user_by_username(&self, username: &str) -> Result<Option<User>, AppError> {
         let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = ?")
