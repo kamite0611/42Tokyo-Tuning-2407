@@ -27,6 +27,7 @@ mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    env_logger::init();
     let pool = infrastructure::db::create_pool().await;
     let mut port = 8080;
 
@@ -34,9 +35,10 @@ async fn main() -> std::io::Result<()> {
         port = 18080;
     }
 
+    
     let auth_service = web::Data::new(AuthService::new(AuthRepositoryImpl::new(pool.clone())));
     let auth_service_for_middleware =
-        Arc::new(AuthService::new(AuthRepositoryImpl::new(pool.clone())));
+    Arc::new(AuthService::new(AuthRepositoryImpl::new(pool.clone())));
     let tow_truck_service = web::Data::new(TowTruckService::new(
         TowTruckRepositoryImpl::new(pool.clone()),
         OrderRepositoryImpl::new(pool.clone()),
@@ -50,6 +52,9 @@ async fn main() -> std::io::Result<()> {
     ));
     let map_service = web::Data::new(MapService::new(MapRepositoryImpl::new(pool.clone())));
 
+
+    println!("Start server. port {}", port);
+    
     HttpServer::new(move || {
         let mut cors = Cors::default();
 
