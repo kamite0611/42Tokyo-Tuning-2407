@@ -21,6 +21,7 @@ ALTER TABLE nodes ADD INDEX nodes_id_area_id(area_id);
 
 
 ALTER TABLE orders ADD INDEX orders_id(id);
+ALTER TABLE orders ADD INDEX orders_id_car_value(id,car_value);
 ALTER TABLE orders ADD INDEX orders_id_client_id(client_id);
 ALTER TABLE orders ADD INDEX orders_id_dispatcher_id(dispatcher_id);
 ALTER TABLE orders ADD INDEX orders_id_tow_truck_id(tow_truck_id);
