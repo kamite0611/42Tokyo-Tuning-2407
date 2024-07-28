@@ -74,7 +74,6 @@ impl<
 
         Ok(())
     }
-
     pub async fn get_nearest_available_tow_trucks(
         &self,
         order_id: i32,
@@ -104,7 +103,7 @@ impl<
             let mut tow_trucks_with_distance: Vec<_> = tow_trucks
                 .into_iter()
                 .map(|truck| {
-                    let distance = calculate_distance(&graph, truck.node_id, order.node_id);
+                    let distance = graph.shortest_path(truck.node_id, order.node_id);
                     (distance, truck)
                 })
                 .collect();
@@ -113,8 +112,7 @@ impl<
             tow_trucks_with_distance
         };
 
-        if sorted_tow_trucks_by_distance.is_empty() || sorted_tow_trucks_by_distance[0].0 > 10000000
-        {
+        if sorted_tow_trucks_by_distance.is_empty() || sorted_tow_trucks_by_distance[0].0 > 10000000 {
             return Ok(None);
         }
 

@@ -1,5 +1,6 @@
 use sqlx::FromRow;
-use std::collections::HashMap;
+use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap};
 
 #[derive(FromRow, Clone, Debug)]
 pub struct Node {
@@ -15,10 +16,31 @@ pub struct Edge {
     pub weight: i32,
 }
 
-#[derive(Debug)]
+// PriorityQueue のエントリを定義
+#[derive(Copy, Clone, Eq, PartialEq)]
+struct State {
+    cost: i32,
+    position: i32,
+}
+
+// PriorityQueue で最小コストの状態が優先されるように実装
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // 注意: この順序は逆になるべきです (最小の値が最優先)
+        other.cost.cmp(&self.cost)
+    }
+}
+
+// PartialOrd の実装
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 pub struct Graph {
-    pub nodes: HashMap<i32, Node>,
-    pub edges: HashMap<i32, Vec<Edge>>,
+    nodes: HashMap<i32, Node>,
+    edges: HashMap<i32, Vec<Edge>>,
 }
 
 impl Graph {
@@ -34,43 +56,54 @@ impl Graph {
     }
 
     pub fn add_edge(&mut self, edge: Edge) {
-        self.edges
-            .entry(edge.node_a_id)
-            .or_default()
-            .push(edge.clone());
+        self.edges.entry(edge.node_a_id).or_default().push(edge.clone());
 
         let reverse_edge = Edge {
             node_a_id: edge.node_b_id,
             node_b_id: edge.node_a_id,
             weight: edge.weight,
         };
-        self.edges
-            .entry(reverse_edge.node_a_id)
-            .or_default()
-            .push(reverse_edge);
+        self.edges.entry(reverse_edge.node_a_id).or_default().push(reverse_edge);
     }
 
-    pub fn shortest_path(&self, from_node_id: i32, to_node_id: i32) -> i32 {
-        let mut distances = HashMap::new();
-        distances.insert(from_node_id, 0);
+    pub fn shortest_path(&self, start: i32, goal: i32) -> i32 {
+        let mut dist: HashMap<i32, i32> = HashMap::new();
+        let mut heap = BinaryHeap::new();
 
-        for _ in 0..self.nodes.len() {
-            for node_id in self.nodes.keys() {
-                if let Some(edges) = self.edges.get(node_id) {
-                    for edge in edges {
-                        let new_distance = distances
-                            .get(node_id)
-                            .and_then(|d: &i32| d.checked_add(edge.weight))
-                            .unwrap_or(i32::MAX);
-                        let current_distance = distances.get(&edge.node_b_id).unwrap_or(&i32::MAX);
-                        if new_distance < *current_distance {
-                            distances.insert(edge.node_b_id, new_distance);
-                        }
+        // 初期化
+        dist.insert(start, 0);
+        heap.push(State { cost: 0, position: start });
+
+        // メインループ
+        while let Some(State { cost, position }) = heap.pop() {
+            // 既に見つけた最短経路より長いなら無視
+            if cost > *dist.get(&position).unwrap_or(&i32::MAX) {
+                continue;
+            }
+
+            // 目的地に到達した場合
+            if position == goal {
+                return cost;
+            }
+
+            // 隣接する各ノードに対して
+            if let Some(edges) = self.edges.get(&position) {
+                for edge in edges {
+                    let next = State {
+                        cost: cost + edge.weight,
+                        position: edge.node_b_id,
+                    };
+
+                    // より短い経路が見つかった場合
+                    if next.cost < *dist.get(&next.position).unwrap_or(&i32::MAX) {
+                        heap.push(next);
+                        dist.insert(next.position, next.cost);
                     }
                 }
             }
         }
 
-        distances.get(&to_node_id).cloned().unwrap_or(i32::MAX)
+        // 目的地に到達できない場合
+        i32::MAX
     }
 }
